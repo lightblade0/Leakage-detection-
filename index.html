@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YOLO Webcam</title>
+</head>
+<body>
+  <h1>YOLO Object Detection</h1>
+  <video id="webcam" autoplay playsinline></video>
+  <canvas id="output"></canvas>
+  <script>
+    // Access the webcam
+    const video = document.getElementById("webcam");
+    const canvas = document.getElementById("output");
+    const ctx = canvas.getContext("2d");
+
+    // Get webcam stream
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+        video.play();
+      })
+      .catch((err) => console.error("Webcam access denied:", err));
+
+    // Capture frames and send to backend
+    async function captureFrame() {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const frame = canvas.toDataURL("image/jpeg");
+
+      // Send frame to backend
+      const response = await fetch("http://localhost:5000/detect", {
+        method: "POST",
+        body: JSON.stringify({ image: frame }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const result = await response.json();
+      console.log(result); // Process detection results
+    }
+
+    // Capture frames at regular intervals
+    setInterval(captureFrame, 100); // Adjust interval as needed
+  </script>
+</body>
+</html>
